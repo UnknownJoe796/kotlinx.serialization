@@ -114,6 +114,66 @@ public fun serializer(
 public fun serializerOrNull(type: KType): KSerializer<Any?>? = EmptySerializersModule().serializerOrNull(type)
 
 /**
+ * Creates a serializer for the given [T] if possible.  If not, it will create a [ContextualSerializer].
+ *
+ * This overload works with full type information, including type arguments and nullability,
+ * and is a recommended way to retrieve a serializer when you aren't sure which [SerializersModule] will be used yet.
+ *
+ * Variance of [T]'s arguments is not used by the serialization and is not taken into account.
+ * Star projections in [T]'s arguments are prohibited.
+ *
+ * @return [KSerializer] for the given [T] or a [ContextualSerializer] if serializer cannot be created (given [T] or its type argument is not serializable).
+ * @throws IllegalArgumentException if any of [T]'s arguments contains star projection
+ */
+@ExperimentalSerializationApi
+public inline fun <reified T> serializerOrContextual(): KSerializer<T> {
+    return serializerOrContextual(typeOf<T>()).cast()
+}
+
+/**
+ * Creates a serializer for the given [type] if possible.  If not, it will create a [ContextualSerializer].
+ * [type] argument is usually obtained with [typeOf] method.
+ *
+ * This overload works with full type information, including type arguments and nullability,
+ * and is a recommended way to retrieve a serializer when you aren't sure which [SerializersModule] will be used yet.
+ *
+ * Variance of [type]'s arguments is not used by the serialization and is not taken into account.
+ * Star projections in [type]'s arguments are prohibited.
+ *
+ * @return [KSerializer] for the given [type] or a [ContextualSerializer] if serializer cannot be created (given [type] or its type argument is not serializable).
+ * @throws IllegalArgumentException if any of [type]'s arguments contains star projection
+ */
+@ExperimentalSerializationApi
+public fun serializerOrContextual(type: KType): KSerializer<Any?> {
+    val rootClass = type.kclass()
+    val isNullable = type.isMarkedNullable
+    val typeArguments = type.arguments.map(KTypeProjection::typeOrThrow)
+
+    val cachedSerializer = if (typeArguments.isEmpty()) {
+        findCachedSerializer(rootClass, isNullable)
+    } else {
+        findParametrizedCachedSerializer(
+            rootClass,
+            typeArguments,
+            isNullable
+        ).getOrNull()
+    }
+
+    if (cachedSerializer != null) return cachedSerializer
+
+    // slow path to find contextual serializers in serializers module
+    val contextualSerializer: KSerializer<out Any?> = if (typeArguments.isEmpty()) {
+        rootClass.serializerOrNull()
+            ?: ContextualSerializer(rootClass)
+    } else {
+        val serializers = typeArguments.map { serializerOrContextual(it) }
+        rootClass.parametrizedSerializerOrNull(serializers) { typeArguments[0].classifier }
+            ?: ContextualSerializer(rootClass, null, serializers.toTypedArray())
+    }
+    return contextualSerializer.cast<Any>().nullable(isNullable)
+}
+
+/**
  * Retrieves default serializer for the given [type] and,
  * if [type] is not serializable, fallbacks to [contextual][SerializersModule.getContextual] lookup.
  * [type] argument is usually obtained with [typeOf] method.

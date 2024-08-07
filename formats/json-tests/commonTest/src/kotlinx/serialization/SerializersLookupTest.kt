@@ -315,6 +315,18 @@ class SerializersLookupTest : JsonTestBase() {
         }
     }
 
+    @Test
+    fun testContextualFallback() {
+        assertEquals("1", Json.encodeToString(serializerOrContextual<Int>(), 1))
+        assertEquals("[1]", Json.encodeToString(serializerOrContextual<List<Int>>(), listOf(1)))
+        val jsonWithModule = Json {
+            serializersModule = SerializersModule { contextual(CustomIntSerializer(false).cast<IntBox>()) }
+        }
+        assertEquals("42", jsonWithModule.encodeToString(serializerOrContextual<IntBox>(), IntBox(1)))
+        assertEquals("[42]", jsonWithModule.encodeToString(serializerOrContextual<List<IntBox>>(), listOf(IntBox(1))))
+        assertEquals("[42,null]", jsonWithModule.encodeToString(serializerOrContextual<List<IntBox?>?>(), listOf(IntBox(1), null)))
+    }
+
     private inline fun <reified T> assertSerializedWithType(
         expected: String,
         value: T,
