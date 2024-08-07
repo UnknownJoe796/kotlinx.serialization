@@ -33,6 +33,7 @@ In this chapter we'll take a look at serializers in more detail, and we'll see h
 * [Contextual serialization](#contextual-serialization)
   * [Serializers module](#serializers-module)
   * [Contextual serialization and generic classes](#contextual-serialization-and-generic-classes)
+  * [Using top-level serializer function with contextual (experimental)](#using-top-level-serializer-function-with-contextual-experimental)
 * [Deriving external serializer for another Kotlin class (experimental)](#deriving-external-serializer-for-another-kotlin-class-experimental)
   * [External serialization uses properties](#external-serialization-uses-properties)
 
@@ -1152,6 +1153,19 @@ For cases when one want to serialize contextually a generic class, it is possibl
 val correctModule = SerializersModule {
     // args[0] contains Int.serializer() or String.serializer(), depending on the usage
     contextual(Box::class) { args -> BoxSerializer(args[0]) } 
+}
+```
+
+### Using top-level serializer function with contextual (experimental)
+
+If you need to get a serializer for a type that will require `@Contextual` serialization
+and you know the serializer will be provided for it later in a `SerializersModule`, you
+can use the top level `serializerOrContextual<T>()` function to create it.
+
+```kotlin 
+fun main() {        
+    val serializer: KSerializer<List<Date>> = serializerOrContextual<List<Date>>()
+    println(format.encodeToString(serializer, listOf(SimpleDateFormat("yyyy-MM-ddX").parse("2016-02-15+00"))))
 }
 ```
 

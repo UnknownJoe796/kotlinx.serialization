@@ -80,6 +80,7 @@ Once the project is set up, we can start serializing some classes.
 * <a name='contextual-serialization'></a>[Contextual serialization](serializers.md#contextual-serialization)
   * <a name='serializers-module'></a>[Serializers module](serializers.md#serializers-module)
   * <a name='contextual-serialization-and-generic-classes'></a>[Contextual serialization and generic classes](serializers.md#contextual-serialization-and-generic-classes)
+  * <a name='using-top-level-serializer-function-with-contextual-experimental'></a>[Using top-level serializer function with contextual (experimental)](serializers.md#using-top-level-serializer-function-with-contextual-experimental)
 * <a name='deriving-external-serializer-for-another-kotlin-class-experimental'></a>[Deriving external serializer for another Kotlin class (experimental)](serializers.md#deriving-external-serializer-for-another-kotlin-class-experimental)
   * <a name='external-serialization-uses-properties'></a>[External serialization uses properties](serializers.md#external-serialization-uses-properties)
 <!--- END -->
